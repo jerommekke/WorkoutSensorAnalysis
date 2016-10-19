@@ -22,13 +22,13 @@ extractExercise <- function(filename, exercisename) {
   all.key <- data.matrix(file.data$V2)
   
   # seperate out accelerometer and gyrometer data
-  acc.x <- all.x[all.key == "ACC"]
-  acc.y <- all.y[all.key == "ACC"]
-  acc.z <- all.z[all.key == "ACC"]
+  acc.x <- as.double(all.x[all.key == "ACC"])
+  acc.y <- as.double(all.y[all.key == "ACC"])
+  acc.z <- as.double(all.z[all.key == "ACC"])
   
-  gyr.x <- all.x[all.key == "GYR"]
-  gyr.y <- all.y[all.key == "GYR"]
-  gyr.z <- all.z[all.key == "GYR"]
+  gyr.x <- as.double(all.x[all.key == "GYR"])
+  gyr.y <- as.double(all.y[all.key == "GYR"])
+  gyr.z <- as.double(all.z[all.key == "GYR"])
   
   # find the exercises
   excercises  <- data.matrix(file.data$V3[all.key == "EXC"])
@@ -51,7 +51,6 @@ extractExercise <- function(filename, exercisename) {
   t_acc <- t[all.key == "ACC"]
   t_gyr <- t[all.key == "GYR"]
   
-  
   t <- t_acc[t_acc > t_begin & t_acc < t_end]
   x <- acc.x[t_acc > t_begin & t_acc < t_end]
   y <- acc.y[t_acc > t_begin & t_acc < t_end]
@@ -68,7 +67,9 @@ extractExercise <- function(filename, exercisename) {
   
   gyr <- data.frame(t, x, y, z)
   
-  return(acc)
+  both <- list(acc = acc, gyr = gyr)
+  
+  return(both)
 }
 
 
