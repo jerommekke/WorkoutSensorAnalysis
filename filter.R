@@ -42,15 +42,16 @@ updateGravity <- function(v) {
 #acc <- test[["acc"]]
 #v <- cbind(acc$x, acc$y, acc$z) # make vector
 
-filterbank <- function(v) {
+##TODO: Make dt-dependent
+filterbank <- function(v, filterConst) {
   # This should seperate out slow-moving stuff from fast moving stuff
   
-  
   # Initial assumption of gravity is:
-  g <- c(0, 0, 9.81)
+  gravConst <- 9.81
+  g <- c(0, 0, gravConst)
   
   #g' = alpha *g + (1-alpha)*a
-  alpha <- 0.8
+  alpha <- filterConst
   
   slow <- v;
   fast <- v;
@@ -58,9 +59,21 @@ filterbank <- function(v) {
   for (i in 1:nrow(v)) {
     slow[i,] <- alpha*g + (1-alpha)*v[i,]
     g <- slow[i,]
-    
-    fast[i,] <- v[i,] - slow[i,]
   }
+  
+  # Now correct this approximation as we know that ||slow|| = 9.81
+  # This only corrects magnitude though
+  # TODO: is there a way to correct for angle, too?
+  correctToGrav <- function(v){ 
+      v <- v * gravConst/normOfVector(v)
+    }
+  
+  slow <- apply(slow, 1, correctToGrav)
+  # for some reason ,this transposed slow? wtf?
+  slow <- t(slow)
+  
+  # now substract gravity from the signal to get the movement
+  fast <- v - slow
     
   decomp <- list(slow = slow, fast = fast)
     
