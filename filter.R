@@ -72,6 +72,33 @@ filterbank <- function(v, filterConst) {
   # for some reason ,this transposed slow? wtf?
   slow <- t(slow)
   
+  
+  ## The above assumes that all acceleration that is slow enough to be
+  # filtered out together with gravity must be acceleration in the direction of the
+  # gravity vector. That is probably not the most accurate for use in a workout
+  # detection algorithm, where we can have slow movements at an angle with gravity
+  # A possibly better (i.e. less strict) assumption would be to only assume that the 
+  # gravity vector lies in the plane that is spanned by the slow moving 
+  # vector and the fast moving vector. Since we also require that a = a' + g
+  # where a' is the corrected motion, we have (where f is fast and s is slow)
+  #
+  # g = (gamma)*f + (1-gamma)*s
+  # where gamma in the range (0,1) and where we know the magnitude of ||g||, so that
+  # we can use the law of cosines
+  # ||g||^2 = ||f||^2*gamma^2 + (1-gamma)^2*||s||^2 - 2*||f||*||s||*cos(angle)
+  # where the angle is the angle between f and s
+  # that gives us
+  # ||g||^2 = ||f||^2*gamma^2 + (1+gamma^2-2*gamma)*||s||^2 - 2*||f||*||s||*cos(angle)
+  # or
+  # 0 = gamma^2 ( ||f^2|| + ||s^2||) + gamma ( -2*||s||^2 ) + ||s||^2-||g||^2 - 
+  #                       2*||f||*||s||*cos(angle)
+  # which can be solved for gamma using the quadratic equation to give:
+  # gamma = 2*||s||^2 +/- sqrt( 4*||s||^4 - 4*(||f||^2+||s||^2)*
+  #                                         (||s||^2-||g||^2-2*||f||*||s||*cos(angle)) )
+  #             / 2*( ||f^2|| + ||s^2||) 
+
+  
+  
   # now substract gravity from the signal to get the movement
   fast <- v - slow
     
