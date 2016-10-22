@@ -6,17 +6,17 @@ normOfVector <- function(x) sqrt(sum(x^2))
 ## v1 . v2 = ||v1|| * ||v2|| cos(angle)
 ## where . the dot product
 ## so angle = arccos( v1.v2 / ||v1||*||v2||)
-angleWithGravity <- function(v, g) {
-  # requires v and g to both be an nx3 matrix
+angleBetweenVectors <- function(v1, v2) {
+  # requires v1 and v2 to both be an nx3 matrix
   
-  v_norm <- apply(v, 1, normOfVector)
-  g_norm <- apply(g, 1, normOfVector)
+  v1_norm <- normOfVector(v1)
+  v2_norm <- normOfVector(v2)
   
   # the inproduct is 
-  in_prod <- apply(v*g, 1, sum)
+  in_prod <- sum(v1*v2)
   
   # angle
-  angle <- acos( in_prod / (v_norm*g_norm) )
+  angle <- acos( in_prod / (v1_norm*v2_norm) )
   
   return(angle)
 }

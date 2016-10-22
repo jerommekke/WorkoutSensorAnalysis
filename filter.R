@@ -43,34 +43,47 @@ updateGravity <- function(v) {
 #v <- cbind(acc$x, acc$y, acc$z) # make vector
 
 ##TODO: Make dt-dependent
-filterbank <- function(v, filterConst) {
+splitGravity <- function(v, t, filterConst) {
   # This should seperate out slow-moving stuff from fast moving stuff
-  
-  # Initial assumption of gravity is:
   gravConst <- 9.81
-  g <- c(0, 0, gravConst)
-  
-  #g' = alpha *g + (1-alpha)*a
-  alpha <- filterConst
-  
-  slow <- v;
-  fast <- v;
-  
-  for (i in 1:nrow(v)) {
-    slow[i,] <- alpha*g + (1-alpha)*v[i,]
-    g <- slow[i,]
-  }
   
   # Now correct this approximation as we know that ||slow|| = 9.81
   # This only corrects magnitude though
   # TODO: is there a way to correct for angle, too?
   correctToGrav <- function(v){ 
-      v <- v * gravConst/normOfVector(v)
-    }
+    v <- v * gravConst/normOfVector(v)
+  }
   
-  slow <- apply(slow, 1, correctToGrav)
+  # get filter const based on dt
+  dt <- t
+  n  <- length(dt)
+  dt[2:n] <- dt[2:n] - dt[1:n-1]
+  dt[1] <- dt[2]
+  
+  #g' = alpha *g + (1-alpha)*a
+  alpha <- filterConst/(filterConst+dt)
+  
+  # Initial assumption of gravity is:
+  # magnitude of gravity in direction of initial vector
+  g <- correctToGrav(v[1,]) 
+  
+  # start splitting
+  slow <- v;
+  fast <- v;
+  
+  for (i in 1:nrow(v)) {
+    slow[i,] <- alpha[i]*g + (1-alpha[i])*v[i,]
+    g <- slow[i,]
+  }
+  
+  
+  # now substract gravity from the signal to get the movement
+  fast <- v - slow
+  
+  # Simple correction 
+  slow_corrected <- apply(slow, 1, correctToGrav)
   # for some reason ,this transposed slow? wtf?
-  slow <- t(slow)
+  slow_corrected <- t(slow_corrected)
   
   
   ## The above assumes that all acceleration that is slow enough to be
@@ -96,12 +109,24 @@ filterbank <- function(v, filterConst) {
   # gamma = 2*||s||^2 +/- sqrt( 4*||s||^4 - 4*(||f||^2+||s||^2)*
   #                                         (||s||^2-||g||^2-2*||f||*||s||*cos(angle)) )
   #             / 2*( ||f^2|| + ||s^2||) 
-
+  # norm_s <- apply(slow, 1, normOfVector)
+  # norm_f <- apply(fast, 1, normOfVector)
+  # angleBetweenFAndS <- angleBetweenVectors(slow, fast)
+  # gamma <- (2*norm_s^2 - sqrt( 4*norm_s^4 - 4*(norm_f^2+norm_s^2)*
+  #                               (norm_s^2-gravConst^2-2*norm_f*norm_s)*cos(angleBetweenFAndS))) /
+  #                   (2*(norm_f^2+norm_s^2))
+  # 
+  # 
+  # # smarter correction where possible
+  # possible <- !is.na(gamma)
+  # slow_corrected[possible] = gamma[possible]*fast[possible] + (1-gamma[possible])*slow[possible]
+  # 
   
-  
-  # now substract gravity from the signal to get the movement
+  # correct again
+  slow <- slow_corrected
   fast <- v - slow
-    
+  
+  
   decomp <- list(slow = slow, fast = fast)
     
   return(decomp)
