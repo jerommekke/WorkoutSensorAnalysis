@@ -36,12 +36,22 @@ changeFrameOfReference <- function(v, reference, dir = 3) {
   
   R <- cos(-angle)*diag(3) + sin(-angle)*crossProdMatrix + (1-cos(-angle))*tensor
   
+  # TODO: these checks can go away once we've build enough confidence
+  # they're just testing we do what I expect
+  if (abs(abs(det(R))  - 1) > 1e-3) {
+    print("Warnig: det R != 1")
+  }
+  if ( abs((R %*% reference)[3] - 1) > 1e-3 )
+  {
+    print("Error in rotation")
+  }
+  
   # now rotate v
   v <- R %*% v
   
 }
 
-changeFrameOfReferenceTimeSeries <- function(v, reference, dir) {
+changeFrameOfReferenceTimeSeries <- function(v, reference, dir = 3) {
   # same as above, now with v and reference time series
   for (i in 1:nrow(v)) {
     v[i,] <- changeFrameOfReference(v[i,], reference[i,], dir)
